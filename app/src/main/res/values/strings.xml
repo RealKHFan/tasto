@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tasto</string>
+    <string name="subtype_de_en">German + English</string>
+    <string name="subtype_ru">Russian</string>
+    <string name="subtype_ja">Japanese (romaji)</string>
+    <string name="subtype_ja_flick">Japanese (12-key)</string>
+</resources>

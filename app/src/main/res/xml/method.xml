@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    One subtype per Tasto language, so they show in Android's keyboard switcher (the 🌐 list).
+    The extra value tells Tasto which language a subtype is (see TastoIme.profileIdOf).
+    The subtype ids must never change: Android remembers the chosen one by id.
+-->
+<input-method xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="io.github.realkhfan.tasto.ui.MainActivity"
+    android:supportsSwitchingToNextInputMethod="true">
+    <subtype
+        android:label="@string/subtype_de_en"
+        android:subtypeId="0x7a510001"
+        android:imeSubtypeLocale="de_DE"
+        android:languageTag="de-DE"
+        android:imeSubtypeMode="keyboard"
+        android:imeSubtypeExtraValue="tasto=de_en"
+        android:isAsciiCapable="true" />
+    <subtype
+        android:label="@string/subtype_ru"
+        android:subtypeId="0x7a510002"
+        android:imeSubtypeLocale="ru_RU"
+        android:languageTag="ru-RU"
+        android:imeSubtypeMode="keyboard"
+        android:imeSubtypeExtraValue="tasto=ru" />
+    <subtype
+        android:label="@string/subtype_ja"
+        android:subtypeId="0x7a510003"
+        android:imeSubtypeLocale="ja_JP"
+        android:languageTag="ja-JP"
+        android:imeSubtypeMode="keyboard"
+        android:imeSubtypeExtraValue="tasto=ja" />
+    <subtype
+        android:label="@string/subtype_ja_flick"
+        android:subtypeId="0x7a510004"
+        android:imeSubtypeLocale="ja_JP"
+        android:languageTag="ja-JP"
+        android:imeSubtypeMode="keyboard"
+        android:imeSubtypeExtraValue="tasto=ja_flick" />
+</input-method>
