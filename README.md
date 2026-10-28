@@ -4,6 +4,19 @@ A private, Google-free keyboard for Android, built for GrapheneOS.
 
 Tasto learns your words on your phone, goes incognito automatically in private browser tabs, and has **no internet permission**, so nothing you type can leave the device.
 
+<p>
+<img src="docs/screenshots/01_german_english.png" width="200" alt="German and English typing with suggestions">
+<img src="docs/screenshots/02_japanese_romaji.png" width="200" alt="Japanese romaji with kanji candidates">
+<img src="docs/screenshots/03_japanese_flick.png" width="200" alt="Japanese 12-key flick with the flick guide">
+<img src="docs/screenshots/04_learned_words.png" width="200" alt="Learned words manager">
+</p>
+<p>
+<img src="docs/screenshots/05_russian.png" width="200" alt="Russian keyboard">
+<img src="docs/screenshots/06_languages.png" width="200" alt="Language list in the keyboard">
+<img src="docs/screenshots/07_emoji.png" width="200" alt="Emoji panel">
+<img src="docs/screenshots/08_privacy.png" width="200" alt="Privacy and incognito settings">
+</p>
+
 ## Features
 
 - **QWERTZ layout with German + English combined.** Suggestions in both languages at once, leaning towards the language you are writing in.
@@ -36,7 +49,7 @@ Tasto learns your words on your phone, goes incognito automatically in private b
 - **Emoji panel** with recents, and a **clipboard panel**. Copied text is kept for one hour, pinned items stay, and text marked sensitive by password managers is never stored.
 - **Looks.** Dark, light or system theme, six accent colours, three key sizes, optional number row.
 - **Password fields** show the digits 1–0 above the letters automatically (can be turned off).
-- **Easy way back** from the emoji and clipboard panels: the ‹ arrow, tapping the highlighted icon again, ABC, or Android's Back gesture.
+- **Easy way back** from the emoji, clipboard and language panels: the ‹ arrow, tapping the highlighted icon again, ABC, or Android's Back gesture.
 - **Space after punctuation:** typing . , ! ? : ; after a word adds the space for you (not in numbers, addresses or abbreviations like z.B.). Can be turned off.
 - **SwiftKey-style layout:** the same key sizes, symbol pages and suggestion row, with a round button that shows or hides the toolbar.
 - **Special fields.** Number pad, phone pad, and email/URL layouts with "@" and "/" keys.
