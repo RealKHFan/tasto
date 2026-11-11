@@ -64,10 +64,28 @@ class SettingsModel(val prefs: Prefs) {
     fun updateManualIncognito(v: Boolean) { prefs.manualIncognito = v; manualIncognito = v }
     fun updateClipboardHistory(v: Boolean) { prefs.clipboardHistory = v; clipboardHistory = v }
 
-    /** Picks up changes made from the keyboard (the incognito button, a language picked in Android's 🌐 list). */
+    /** Picks up changes made elsewhere: the keyboard (incognito button, Android's 🌐 list) or an imported backup. */
     fun reload() {
-        manualIncognito = prefs.manualIncognito
+        theme = prefs.theme
+        accent = prefs.accent
+        keyHeight = prefs.keyHeight
+        keyHints = prefs.keyHints
+        keyPopup = prefs.keyPopup
+        numberRow = prefs.numberRow
+        numberRowPasswords = prefs.numberRowPasswords
+        coloredEnter = prefs.coloredEnter
+        autoSpace = prefs.autoSpace
         enabledLanguages = prefs.enabledLanguages
+        autocorrect = prefs.autocorrect
+        autoCap = prefs.autoCap
+        doubleSpace = prefs.doubleSpace
+        suggestions = prefs.suggestions
+        vibrate = prefs.vibrate
+        sound = prefs.sound
+        learning = prefs.learning
+        autoIncognito = prefs.autoIncognito
+        manualIncognito = prefs.manualIncognito
+        clipboardHistory = prefs.clipboardHistory
     }
 
     val accentColor: Int get() = KeyboardTheme.ACCENTS[accent] ?: KeyboardTheme.ACCENTS.getValue("blue")

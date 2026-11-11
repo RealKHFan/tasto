@@ -14,7 +14,7 @@ Tasto learns your words on your phone, goes incognito automatically in private b
 <img src="docs/screenshots/05_russian.png" width="200" alt="Russian keyboard">
 <img src="docs/screenshots/06_languages.png" width="200" alt="Language list in the keyboard">
 <img src="docs/screenshots/07_emoji.png" width="200" alt="Emoji panel">
-<img src="docs/screenshots/08_privacy.png" width="200" alt="Privacy and incognito settings">
+<img src="docs/screenshots/08_privacy.png" width="200" alt="Privacy and incognito settings with backup export and import">
 </p>
 
 ## Features
@@ -34,6 +34,7 @@ Tasto learns your words on your phone, goes incognito automatically in private b
 - **Suggestions and autocorrect.** Three suggestions above the keys, the best one in the middle. Autocorrect fixes typos, missing umlauts (uber → über), apostrophes (dont → don't) and noun capitals (haus → Haus). Press backspace right after a correction to undo it.
 - **Remembrance.** Tasto learns the words and phrases you use and predicts your next word.
 - **Learned-words manager.** See everything Tasto learned with how often you used it. Filter by Often / Sometimes / Rarely or new words only, search, sort, delete single words or all of them, or add words by hand.
+- **Moving to a new phone.** Privacy → Export backup saves one password-protected file with your learned words and phrases, Japanese choices, settings and pinned clips. Copy it to the new phone (USB, SD card, Nextcloud…) and use Import backup there. Words you already have keep the higher count.
 - **Incognito.**
   - Turns on automatically in private browser tabs (Vanadium, Firefox…) and in apps that ask for no learning.
   - Password fields are always private.
@@ -60,7 +61,7 @@ Tasto learns your words on your phone, goes incognito automatically in private b
 - No `INTERNET` permission. The only permission is `VIBRATE`.
 - No Google Play Services, no tracking or analytics libraries, and no downloadable fonts.
 - Learned words, settings and clipboard history live in app-private storage. Android encrypts that storage at rest.
-- Tasto's data is excluded from cloud backup and device-to-device transfer.
+- Tasto's data is excluded from cloud backup and device-to-device transfer. The only way out is a backup file you export yourself: encrypted with AES-256-GCM under a key made from your password (PBKDF2-SHA256, 600,000 rounds). Without the password it can't be read, and a changed file is refused.
 
 ## Install
 
@@ -81,7 +82,7 @@ Releases are signed with this certificate (SHA-256), so you can check the APK, f
 Requires JDK 17+ and the Android SDK (platform 36).
 
 ```sh
-./gradlew testDebugUnitTest   # 228 tests: engine, typing, touch, navigation, languages, Japanese, storage, screens
+./gradlew testDebugUnitTest   # 239 tests: engine, typing, touch, navigation, languages, Japanese, storage, backup, screens
 ./gradlew assembleRelease
 ```
 

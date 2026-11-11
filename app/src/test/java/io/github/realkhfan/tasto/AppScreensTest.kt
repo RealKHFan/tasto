@@ -3,6 +3,9 @@ package io.github.realkhfan.tasto
 import android.graphics.Bitmap
 import android.os.Looper
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextEquals
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -10,6 +13,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextClearance
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import io.github.realkhfan.tasto.data.LearnedStore
@@ -135,11 +141,92 @@ class AppScreensTest {
 
     @Test fun privacyTogglesWritePrefs() {
         rule.setContent { TastoTheme(model.accentColor, "dark") { PrivacyScreen(model) {} } }
-        snap("23_app_privacy")
         rule.onNodeWithText("Incognito now").performClick()
         assertTrue(Prefs(ctx).manualIncognito)
         rule.onNodeWithText("Incognito now").performClick()
         assertTrue(!Prefs(ctx).manualIncognito)
+    }
+
+    /** Steps the test clock until [cond] holds; encryption runs on another thread. */
+    private fun advanceUntil(what: String, cond: () -> Boolean) {
+        val deadline = System.currentTimeMillis() + 60_000
+        while (!cond()) {
+            check(System.currentTimeMillis() < deadline) { "timed out: $what" }
+            rule.mainClock.advanceTimeBy(50)
+            Thread.sleep(20)
+        }
+    }
+
+    private fun pickFile(action: String, uri: android.net.Uri, confirm: String) {
+        val shadow = shadowOf(rule.activity)
+        val started = shadow.nextStartedActivityForResult
+        assertEquals(action, started.intent.action)
+        shadow.receiveResult(started.intent, android.app.Activity.RESULT_OK, android.content.Intent().setData(uri))
+        rule.waitForIdle()
+        rule.onNodeWithText(confirm).performScrollTo()
+        // From here a focused password field's blinking cursor never lets Compose settle.
+        rule.mainClock.autoAdvance = false
+    }
+
+    @Test fun backupExportAndImportThroughTheFilePicker() {
+        store.learn("de_en", "moinsen", "moinsen", null, 3, false)
+        store.learn("de_en", "leute", "Leute", "moinsen", 1, true)
+        Prefs(ctx).accent = "red"
+        val file = java.io.ByteArrayOutputStream()
+        val uri = android.net.Uri.parse("content://test.documents/tasto-backup.tasto")
+        rule.setContent { TastoTheme(model.accentColor, "dark") { PrivacyScreen(model) {} } }
+        snap("23_app_privacy")
+        rule.onNodeWithText("Export backup").performScrollTo()
+        val resolver = shadowOf(rule.activity.contentResolver)
+        resolver.registerOutputStream(uri, file)
+        rule.onNodeWithText("Export backup").performClick()
+        pickFile(android.content.Intent.ACTION_CREATE_DOCUMENT, uri, "Export")
+        rule.onNodeWithText("Protect the backup").assertIsDisplayed()
+        rule.onNodeWithTag("password").performTextInput("short")
+        rule.mainClock.advanceTimeBy(100)
+        rule.onNodeWithTag("passwordHint").assertTextEquals("At least 8 characters")
+        rule.onNodeWithText("Export").assertIsNotEnabled()
+        rule.onNodeWithTag("password").performTextInput(" but now long")
+        rule.mainClock.advanceTimeBy(100)
+        rule.onNodeWithTag("password2").performTextInput("short but")
+        rule.mainClock.advanceTimeBy(100)
+        rule.onNodeWithTag("passwordHint").assertTextEquals("The passwords don't match")
+        rule.onNodeWithText("Export").assertIsNotEnabled()
+        rule.onNodeWithTag("password2").performTextInput(" now long")
+        rule.mainClock.advanceTimeBy(100)
+        snap("26_app_backup_password")
+        rule.onNodeWithText("Export").assertIsEnabled().performSemanticsAction(SemanticsActions.OnClick)
+        advanceUntil("export") { rule.onAllNodes(androidx.compose.ui.test.hasTestTag("backupStatus")).fetchSemanticsNodes().isNotEmpty() }
+        rule.onNodeWithTag("backupStatus").assertTextEquals("Backup saved: 2 words, 1 phrase, settings and 0 pinned clips.")
+        assertEquals(0, rule.onAllNodesWithTextCount("Protect the backup"))
+
+        // The new phone.
+        store.deleteAll()
+        Prefs(ctx).accent = "blue"
+        resolver.registerInputStream(uri, java.io.ByteArrayInputStream(file.toByteArray()))
+        rule.mainClock.autoAdvance = true
+        rule.onNodeWithText("Import backup").performScrollTo().performClick()
+        pickFile(android.content.Intent.ACTION_OPEN_DOCUMENT, uri, "Import")
+        rule.onNodeWithText("Enter the password", substring = true).assertIsDisplayed()
+        rule.onNodeWithTag("password").performTextInput("wrong password")
+        rule.mainClock.advanceTimeBy(100)
+        rule.onNodeWithText("Import").performSemanticsAction(SemanticsActions.OnClick)
+        advanceUntil("wrong password") { rule.onAllNodesWithTextCount("Wrong password, or the file was changed.") == 1 }
+        rule.onNodeWithTag("passwordHint").assertTextEquals("Wrong password, or the file was changed.")
+        assertNull(store.cache("de_en").get("moinsen"))
+        resolver.registerInputStream(uri, java.io.ByteArrayInputStream(file.toByteArray()))
+        rule.onNodeWithTag("password").performTextClearance()
+        rule.mainClock.advanceTimeBy(100)
+        rule.onNodeWithTag("password").performTextInput("short but now long")
+        rule.mainClock.advanceTimeBy(100)
+        rule.onNodeWithText("Import").performSemanticsAction(SemanticsActions.OnClick)
+        advanceUntil("import") { rule.onAllNodesWithTextCount("Unlock the backup") == 0 }
+        rule.mainClock.advanceTimeBy(100)
+        rule.onNodeWithTag("backupStatus").assertTextEquals("Imported: 2 words, 1 phrase, settings and 0 pinned clips.")
+        assertEquals(3, store.cache("de_en").get("moinsen")?.count)
+        assertEquals(mapOf("leute" to 1), store.cache("de_en").nexts("moinsen"))
+        assertEquals("red", Prefs(ctx).accent)
+        assertEquals("red", model.accent)
     }
 
     @Test fun appearanceShowsLivePreview() {

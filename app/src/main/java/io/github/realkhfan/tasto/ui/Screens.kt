@@ -465,7 +465,7 @@ fun PrivacyScreen(model: SettingsModel, onBack: () -> Unit) {
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
         ) {
             Text(
-                "Tasto has no internet permission. Learned words, settings and clipboard history stay on this phone and are never backed up to the cloud.",
+                "Tasto has no internet permission. Learned words, settings and clipboard history stay on this phone and are never backed up to the cloud. Only a backup file you export yourself can take them elsewhere.",
                 Modifier.padding(16.dp),
             )
         }
@@ -499,7 +499,8 @@ fun PrivacyScreen(model: SettingsModel, onBack: () -> Unit) {
         }
         SectionTitle("Your data")
         Group {
-            Row(Modifier.padding(16.dp)) {
+            BackupSection(model)
+            Row(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
                 FilledTonalButton(onClick = { confirmWipe = true }) { Text("Delete all learned words") }
             }
         }

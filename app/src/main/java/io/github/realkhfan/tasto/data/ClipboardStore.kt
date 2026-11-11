@@ -62,6 +62,16 @@ class ClipboardStore private constructor(context: Context) {
         save()
     }
 
+    fun pinned(): List<String> = items.filter { it.pinned }.map { it.text }
+
+    /** Pinned clips from a backup, after the ones already here; duplicates are skipped. */
+    fun importPinned(texts: List<String>, now: Long = System.currentTimeMillis()) {
+        for (t in texts.map { it.take(MAX_CHARS) }) {
+            if (t.isNotBlank() && items.none { it.text == t }) items.add(Clip(t, now, true))
+        }
+        save()
+    }
+
     fun clearUnpinned() {
         items.removeAll { !it.pinned }
         save()

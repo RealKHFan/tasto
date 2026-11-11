@@ -22,8 +22,8 @@ android {
         applicationId = "io.github.realkhfan.tasto"
         minSdk = 29
         targetSdk = 36
-        versionCode = 9
-        versionName = "0.3.2"
+        versionCode = 10
+        versionName = "0.4.0"
     }
 
     // Release key: TASTO_KEYSTORE, TASTO_KEYSTORE_PASSWORD, TASTO_KEY_ALIAS, TASTO_KEY_PASSWORD

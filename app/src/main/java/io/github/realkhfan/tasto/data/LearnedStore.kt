@@ -120,6 +120,58 @@ class LearnedStore private constructor(context: Context) {
         notifyChanged()
     }
 
+    /** Everything learned, for a backup. */
+    fun snapshot(): Pair<List<Pair<String, LearnedWord>>, List<LearnedPair>> {
+        val pairs = ArrayList<LearnedPair>()
+        for ((lang, c) in caches) c.forEachBigram { prev, next, count -> pairs.add(LearnedPair(lang, prev, next, count)) }
+        return allWords() to pairs
+    }
+
+    /**
+     * Adds what a backup holds. Words and phrases you already have keep the higher count, so
+     * importing the same file twice changes nothing.
+     */
+    fun importLearned(words: List<Pair<String, LearnedWord>>, pairs: List<LearnedPair>) {
+        val now = System.currentTimeMillis()
+        val mergedWords = words.map { (lang, w) ->
+            val cur = cache(lang).get(w.key)
+            val m = if (cur == null) w else cur.copy(
+                count = maxOf(cur.count, w.count),
+                firstUsed = minOf(cur.firstUsed, w.firstUsed),
+                lastUsed = maxOf(cur.lastUsed, w.lastUsed),
+                inDictionary = cur.inDictionary || w.inDictionary,
+            )
+            cache(lang).put(m)
+            lang to m
+        }
+        val mergedPairs = pairs.map { p ->
+            val m = p.copy(count = maxOf(p.count, cache(p.lang).nexts(p.prev)[p.next] ?: 0))
+            cache(p.lang).putBigram(m.prev, m.next, m.count)
+            m
+        }
+        io.execute {
+            val d = db.writableDatabase
+            d.beginTransaction()
+            try {
+                for ((lang, w) in mergedWords) {
+                    d.insertWithOnConflict("words", null, ContentValues().apply {
+                        put("lang", lang); put("key", w.key); put("word", w.word); put("count", w.count)
+                        put("first_used", w.firstUsed); put("last_used", w.lastUsed); put("in_dict", if (w.inDictionary) 1 else 0)
+                    }, SQLiteDatabase.CONFLICT_REPLACE)
+                }
+                for (p in mergedPairs) {
+                    d.insertWithOnConflict("bigrams", null, ContentValues().apply {
+                        put("lang", p.lang); put("prev", p.prev); put("next", p.next); put("count", p.count); put("last_used", now)
+                    }, SQLiteDatabase.CONFLICT_REPLACE)
+                }
+                d.setTransactionSuccessful()
+            } finally {
+                d.endTransaction()
+            }
+        }
+        notifyChanged()
+    }
+
     /** All learned words with their language profile, for the manager screen. */
     fun allWords(): List<Pair<String, LearnedWord>> = caches.flatMap { (lang, c) -> c.all().map { lang to it } }
 
