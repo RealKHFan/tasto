@@ -3,6 +3,8 @@ package io.github.realkhfan.tasto
 import android.graphics.Bitmap
 import android.os.Looper
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
@@ -161,11 +163,16 @@ class AppScreensTest {
         val shadow = shadowOf(rule.activity)
         val started = shadow.nextStartedActivityForResult
         assertEquals(action, started.intent.action)
-        shadow.receiveResult(started.intent, android.app.Activity.RESULT_OK, android.content.Intent().setData(uri))
-        rule.waitForIdle()
-        rule.onNodeWithText(confirm).performScrollTo()
-        // From here a focused password field's blinking cursor never lets Compose settle.
+        // The form focuses its password field, whose blinking cursor never lets Compose settle.
         rule.mainClock.autoAdvance = false
+        shadow.receiveResult(started.intent, android.app.Activity.RESULT_OK, android.content.Intent().setData(uri))
+        repeat(40) {
+            shadowOf(Looper.getMainLooper()).idle()
+            rule.mainClock.advanceTimeBy(50)
+        }
+        // It opens at the bottom of the screen: the field has focus and the buttons were scrolled into view.
+        rule.onNodeWithTag("password").assertIsFocused()
+        rule.onNodeWithText(confirm).assertIsDisplayed()
     }
 
     @Test fun backupExportAndImportThroughTheFilePicker() {
@@ -195,7 +202,8 @@ class AppScreensTest {
         rule.onNodeWithTag("password2").performTextInput(" now long")
         rule.mainClock.advanceTimeBy(100)
         snap("26_app_backup_password")
-        rule.onNodeWithText("Export").assertIsEnabled().performSemanticsAction(SemanticsActions.OnClick)
+        rule.onNodeWithText("Export").assertIsEnabled()
+        rule.onNodeWithTag("password2").performImeAction() // ✓ on the keyboard exports
         advanceUntil("export") { rule.onAllNodes(androidx.compose.ui.test.hasTestTag("backupStatus")).fetchSemanticsNodes().isNotEmpty() }
         rule.onNodeWithTag("backupStatus").assertTextEquals("Backup saved: 2 words, 1 phrase, settings and 0 pinned clips.")
         assertEquals(0, rule.onAllNodesWithTextCount("Protect the backup"))

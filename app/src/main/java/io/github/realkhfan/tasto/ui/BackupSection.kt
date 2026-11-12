@@ -6,6 +6,11 @@ import android.provider.DocumentsContract
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +24,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,8 +33,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -159,11 +169,19 @@ private fun PasswordForm(
     var again by remember { mutableStateOf("") }
     val tooShort = repeat && password.length < Backup.MIN_PASSWORD
     val ok = password.isNotEmpty() && !tooShort && (!repeat || password == again)
-    Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    val submit = { if (ok && !busy) onConfirm(password.toCharArray()) }
+    // The form opens at the bottom of the screen: focus the password (the keyboard comes up)
+    // and keep the whole form, buttons included, in view above the keyboard.
+    val focus = remember { FocusRequester() }
+    val bring = remember { BringIntoViewRequester() }
+    val keyboardHeight = WindowInsets.ime.getBottom(LocalDensity.current)
+    LaunchedEffect(Unit) { focus.requestFocus() }
+    LaunchedEffect(keyboardHeight, error) { bring.bringIntoView() }
+    Column(Modifier.bringIntoViewRequester(bring).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(title, style = MaterialTheme.typography.titleMedium)
         Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        PasswordField(password, "Password", "password", !busy) { password = it }
-        if (repeat) PasswordField(again, "Repeat password", "password2", !busy) { again = it }
+        PasswordField(password, "Password", "password", !busy, last = !repeat, submit, Modifier.focusRequester(focus)) { password = it }
+        if (repeat) PasswordField(again, "Repeat password", "password2", !busy, last = true, submit) { again = it }
         val hint = when {
             busy -> null
             error != null -> error
@@ -179,13 +197,22 @@ private fun PasswordForm(
                 Text(hint ?: "", color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f).testTag("passwordHint"))
             }
             TextButton(onClick = onCancel, enabled = !busy) { Text("Cancel") }
-            TextButton(onClick = { onConfirm(password.toCharArray()) }, enabled = ok && !busy) { Text(confirm) }
+            TextButton(onClick = submit, enabled = ok && !busy) { Text(confirm) }
         }
     }
 }
 
 @Composable
-private fun PasswordField(value: String, label: String, tag: String, enabled: Boolean, onChange: (String) -> Unit) {
+private fun PasswordField(
+    value: String,
+    label: String,
+    tag: String,
+    enabled: Boolean,
+    last: Boolean,
+    onDone: () -> Unit,
+    modifier: Modifier = Modifier,
+    onChange: (String) -> Unit,
+) {
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
@@ -193,8 +220,10 @@ private fun PasswordField(value: String, label: String, tag: String, enabled: Bo
         label = { Text(label) },
         singleLine = true,
         visualTransformation = PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        modifier = Modifier.fillMaxWidth().testTag(tag),
+        // Enter goes to the repeat field, then exports/imports.
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = if (last) ImeAction.Done else ImeAction.Next),
+        keyboardActions = KeyboardActions(onDone = { onDone() }),
+        modifier = modifier.fillMaxWidth().testTag(tag),
     )
 }
 

@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -98,7 +100,9 @@ fun SubScreen(title: String, onBack: () -> Unit, actions: @Composable () -> Unit
         },
     ) { padding ->
         Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+            // imePadding: the screen ends above the keyboard, so text fields can scroll into view.
+            Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding()
+                .verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
             content = content,
         )
     }
@@ -206,7 +210,9 @@ fun HomeScreen(
     val wordCount = remember(learnedVersion, resumeTick) { LearnedStore.get(context).allWords().size }
     Scaffold { padding ->
         Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+            // imePadding: the screen ends above the keyboard, so text fields can scroll into view.
+            Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding()
+                .verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
         ) {
             Spacer(Modifier.height(28.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
